@@ -57,56 +57,64 @@ async def create_permission(
             RolePermission.module_id == module_id,
         )
     )
-    existing = result.scalars().first()
+    permission = result.scalars().first()
 
-    if existing:
-        return existing
+    if not permission:
+        permission = RolePermission(
+            role_id=role_id,
+            module_id=module_id,
+        )
+        db.add(permission)
 
-    permission = RolePermission(
-        role_id=role_id,
-        module_id=module_id,
-        read_own_permission=read_own,
-        read_all_permission=read_all,
-        create_permission=create,
-        update_own_permission=update_own,
-        update_all_permission=update_all,
-        delete_own_permission=delete_own,
-        delete_all_permission=delete_all,
-    )
+    permission.read_own_permission = read_own
+    permission.read_all_permission = read_all
+    permission.create_permission = create
+    permission.update_own_permission = update_own
+    permission.update_all_permission = update_all
+    permission.delete_own_permission = delete_own
+    permission.delete_all_permission = delete_all
 
-    db.add(permission)
     await db.flush()
     return permission
 
 
-async def create_admin_user(db, admin_role_id: int):
+async def get_or_create_user_with_role(
+    db,
+    email: str,
+    password: str,
+    first_name: str,
+    last_name: str,
+    middle_name: str | None,
+    role_id: int,
+):
     result = await db.execute(
-        select(User).where(User.email == "admin@example.com")
+        select(User).where(User.email == email)
     )
-    admin = result.scalars().first()
+    user = result.scalars().first()
 
-    if not admin:
-        admin = User(
-            email="admin@example.com",
-            first_name="Администратор",
-            last_name="Системы",
-            middle_name=None,
-            hashed_password=hash_password("admin123"),
+    if not user:
+        user = User(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            middle_name=middle_name,
+            hashed_password=hash_password(password),
             is_active=True,
         )
-        db.add(admin)
+        db.add(user)
         await db.flush()
 
     result = await db.execute(
-        select(UserRole).where(
-            UserRole.user_id == admin.id,
-            UserRole.role_id == admin_role_id,
-        )
+        select(UserRole).where(UserRole.user_id == user.id)
     )
-    existing_role = result.scalars().first()
+    user_role = result.scalars().first()
 
-    if not existing_role:
-        db.add(UserRole(user_id=admin.id, role_id=admin_role_id))
+    if user_role:
+        user_role.role_id = role_id
+    else:
+        db.add(UserRole(user_id=user.id, role_id=role_id))
+
+    return user
 
 
 async def seed():
@@ -196,7 +204,35 @@ async def seed():
             db, buyer.id, user_role_management.id,
         )
 
-        await create_admin_user(db, admin.id)
+        await get_or_create_user_with_role(
+            db=db,
+            email="admin@example.com",
+            password="admin123",
+            first_name="Администратор",
+            last_name="Системы",
+            middle_name=None,
+            role_id=admin.id,
+        )
+
+        await get_or_create_user_with_role(
+            db=db,
+            email="seller@example.com",
+            password="seller123",
+            first_name="Тестовый",
+            last_name="Продавец",
+            middle_name=None,
+            role_id=seller.id,
+        )
+
+        await get_or_create_user_with_role(
+            db=db,
+            email="buyer@example.com",
+            password="buyer123",
+            first_name="Тестовый",
+            last_name="Покупатель",
+            middle_name=None,
+            role_id=buyer.id,
+        )
 
         await db.commit()
         print("Seed completed successfully")
