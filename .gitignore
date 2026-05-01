@@ -1,0 +1,11 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.pytest_cache/
+.mypy_cache/
+project_context.txt
+create_context.py
