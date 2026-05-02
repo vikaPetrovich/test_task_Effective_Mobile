@@ -38,3 +38,13 @@ class RolePermissionUpdateRequest(BaseModel):
 class RolePermissionUpdateByNamesRequest(RolePermissionUpdateRequest):
     role_name: str
     module_code: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "role_name": "seller",
+                "module_code": "products",
+                "update_all_permission": True,
+            }
+        }
+    }

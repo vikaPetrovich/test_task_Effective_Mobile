@@ -6,7 +6,6 @@ from src.models.role_permissions import RolePermission
 from src.models.roles import Role
 from src.models.system_modules import SystemModule
 from src.schemas.role_permissions import (
-    RolePermissionUpdateRequest,
     RolePermissionUpdateByNamesRequest,
 )
 
@@ -52,65 +51,19 @@ async def get_all_role_permissions(db: AsyncSession):
     ]
 
 
-async def get_role_permission_by_id(
-    db: AsyncSession,
-    permission_id: int,
+def validate_permission_update_is_allowed(
+    role_name: str,
+    module_code: str,
 ):
-    result = await db.execute(
-        select(RolePermission, Role, SystemModule)
-        .join(Role, Role.id == RolePermission.role_id)
-        .join(SystemModule, SystemModule.id == RolePermission.module_id)
-        .where(RolePermission.id == permission_id)
-    )
-
-    row = result.first()
-
-    if not row:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role permission not found",
-        )
-
-    permission, role, module = row
-
-    return build_role_permission_response(
-        permission=permission,
-        role=role,
-        module=module,
-    )
-
-
-async def update_role_permission(
-    db: AsyncSession,
-    permission_id: int,
-    data: RolePermissionUpdateRequest,
-):
-    result = await db.execute(
-        select(RolePermission).where(RolePermission.id == permission_id)
-    )
-    permission = result.scalars().first()
-
-    if not permission:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role permission not found",
-        )
-
-    update_data = data.model_dump(exclude_unset=True)
-
-    if not update_data:
+    if role_name == "admin" and module_code == "user_role_management":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No fields provided for update",
+            detail=(
+                "Cannot modify admin permissions for "
+                "user_role_management module"
+            ),
         )
 
-    for field, value in update_data.items():
-        setattr(permission, field, value)
-
-    await db.commit()
-    await db.refresh(permission)
-
-    return await get_role_permission_by_id(db, permission.id)
 
 async def update_role_permission_by_names(
     db: AsyncSession,
@@ -144,6 +97,11 @@ async def update_role_permission_by_names(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No fields provided for update",
         )
+
+    validate_permission_update_is_allowed(
+        role_name=role.name,
+        module_code=module.code_name,
+    )
 
     for field, value in update_data.items():
         setattr(permission, field, value)

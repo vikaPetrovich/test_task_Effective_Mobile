@@ -4,6 +4,13 @@ from pydantic import BaseModel, EmailStr
 class AssignRoleRequest(BaseModel):
     role_name: str
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "role_name": "seller"
+            }
+        }
+    }
 
 class AssignRoleResponse(BaseModel):
     user_id: int

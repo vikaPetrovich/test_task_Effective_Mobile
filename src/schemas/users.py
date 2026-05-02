@@ -8,6 +8,15 @@ class UserUpdateRequest(BaseModel):
     last_name: str | None = None
     middle_name: str | None = None
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "first_name": "Иван",
+                "last_name": "Иванов",
+                "middle_name": "Иванович"
+            }
+        }
+    }
 
 class UserResponse(BaseModel):
     id: int

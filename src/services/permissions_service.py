@@ -22,6 +22,14 @@ async def check_permission(
     delete
     """
 
+    allowed_actions = {"read", "create", "update", "delete"}
+
+    if action not in allowed_actions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid permission action",
+        )
+
     # 1. получаем роль пользователя
     role = await get_user_role(db, user_id)
     role_id = role.id

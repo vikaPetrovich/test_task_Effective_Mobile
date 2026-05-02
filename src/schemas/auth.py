@@ -11,10 +11,32 @@ class UserRegisterRequest(BaseModel):
     password: str
     password_repeat: str
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "first_name": "Иван",
+                "last_name": "Иванов",
+                "middle_name": "Иванович",
+                "email": "user@example.com",
+                "password": "password",
+                "password_repeat": "password",
+            }
+        }
+    }
+
 
 class UserLoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "email": "user@example.com",
+                "password": "password",
+            }
+        }
+    }
 
 
 class UserResponse(BaseModel):

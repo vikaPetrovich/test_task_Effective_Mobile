@@ -12,13 +12,12 @@ from src.schemas.user_roles import (
     AssignRoleRequest,
     AssignRoleResponse,
 )
-from src.services.role_permissions_service import (
+from src.services.access_rules_service import (
     get_all_role_permissions,
     update_role_permission_by_names,
 )
 from src.schemas.role_permissions import (
     RolePermissionResponse,
-    RolePermissionUpdateRequest,
     RolePermissionUpdateByNamesRequest,
 )
 
@@ -52,6 +51,7 @@ async def assign_user_role(
         role_name=data.role_name,
     )
 
+
 @router.get(
     "/permissions",
     response_model=list[RolePermissionResponse],
@@ -69,6 +69,7 @@ async def list_role_permissions(
     )
 
     return await get_all_role_permissions(db)
+
 
 @router.patch(
     "/permissions",
